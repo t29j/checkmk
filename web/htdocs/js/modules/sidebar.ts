@@ -91,18 +91,17 @@ export function snapin_start_drag(event) {
     if (
         g_snapin_dragging !== false ||
         button != "LEFT" ||
-        target.tagName != "DIV"
+        (target instanceof HTMLElement && target.tagName != "DIV")
     )
         return true;
 
     event.cancelBubble = true;
-
-    g_snapin_dragging = target.parentNode;
+    g_snapin_dragging = (target as HTMLElement).parentNode as HTMLElement;
 
     // Save relative offset of the mouse to the snapin title to prevent flipping on drag start
     g_snapin_offset = [
-        event.clientY - target.parentNode.offsetTop,
-        event.clientX - target.parentNode.offsetLeft,
+        event.clientY - g_snapin_dragging.offsetTop,
+        event.clientX - g_snapin_dragging.offsetLeft,
     ];
     g_snapin_start_pos = [event.clientY, event.clientX];
     g_snapin_scroll_top = document.getElementById("side_content")!.scrollTop;

@@ -317,7 +317,7 @@ export function add_confirm_on_submit(form_id, message) {
             });
             return utils.prevent_default_events(e);
         },
-        document.getElementById(form_id)
+        document.getElementById(form_id)!
     );
 }
 

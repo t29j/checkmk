@@ -25,7 +25,7 @@ export function is_selection_enabled() {
     return g_selection_enabled;
 }
 
-export function set_selection_enabled(state) {
+export function set_selection_enabled(state: boolean) {
     g_selection_enabled = state;
 }
 
@@ -33,15 +33,15 @@ export function get_selection_id() {
     return selection_properties.selection_id;
 }
 
-export function init_rowselect(properties) {
+export function init_rowselect(properties: Selection_Propoerties) {
     selection_properties = properties;
 
-    var tables = document.getElementsByClassName("data");
+    var tables = utils.querySelectorAllByClassName("data");
     for (var i = 0; i < tables.length; i++)
         if (tables[i].tagName === "TABLE") table_init_rowselect(tables[i]);
 }
 
-function table_init_rowselect(oTable) {
+function table_init_rowselect(oTable: HTMLElement) {
     var childs: null | HTMLInputElement[] = get_all_checkboxes(oTable);
     for (var i = 0; i < childs.length; i++) {
         // Perform initial selections
@@ -50,18 +50,19 @@ function table_init_rowselect(oTable) {
         else childs[i].checked = false;
 
         childs[i].onchange = function (e) {
-            toggle_box(e, this);
+            toggle_box(e, this as HTMLInputElement);
         };
 
-        iter_cells(childs[i], function (elem) {
-            elem.onmouseover = function () {
-                return highlight_row(this, true);
+        iter_cells(childs[i], function (elem: null | HTMLElement) {
+            let el = this as HTMLElement;
+            elem!.onmouseover = function () {
+                return highlight_row(el, true);
             };
-            elem.onmouseout = function () {
-                return highlight_row(this, false);
+            elem!.onmouseout = function () {
+                return highlight_row(el, false);
             };
-            elem.onclick = function (e) {
-                return toggle_row(e, this);
+            elem!.onclick = function (e: Event) {
+                return toggle_row(e, el);
             };
             elem = null;
         });
@@ -73,15 +74,17 @@ function table_init_rowselect(oTable) {
 
 // Container is an DOM element to search below or a list of DOM elements
 // to search below
-function get_all_checkboxes(container) {
+function get_all_checkboxes(container: HTMLElement | HTMLElement[]) {
     var checkboxes: HTMLInputElement[] = [],
         childs,
         i;
-    if (
-        typeof container === "object" &&
-        container.length &&
-        !container.tagName
-    ) {
+    if (container instanceof HTMLElement) {
+        // One DOM node given
+        childs = container.getElementsByTagName("input");
+
+        for (i = 0; i < childs.length; i++)
+            if (childs[i].type == "checkbox") checkboxes.push(childs[i]);
+    } else {
         // Array given - at the moment this is a list of TR objects
         // Skip the header checkboxes
         for (i = 0; i < container.length; i++) {
@@ -93,18 +96,12 @@ function get_all_checkboxes(container) {
                 }
             }
         }
-    } else {
-        // One DOM node given
-        childs = container.getElementsByTagName("input");
-
-        for (i = 0; i < childs.length; i++)
-            if (childs[i].type == "checkbox") checkboxes.push(childs[i]);
     }
 
     return checkboxes;
 }
 
-function toggle_box(e, elem) {
+function toggle_box(e: Event, elem: HTMLInputElement) {
     var row_pos = selection_properties.selected_rows.indexOf(elem.name);
 
     if (row_pos > -1) {
@@ -120,14 +117,17 @@ function toggle_box(e, elem) {
 
 // Iterates over all the cells of the given checkbox and executes the given
 // function for each cell
-function iter_cells(checkbox, func) {
+function iter_cells(
+    checkbox: HTMLInputElement,
+    func: (elem: HTMLElement) => void
+) {
     var num_columns = parseInt(checkbox.value);
     // Now loop the next N cells to call the func for each cell
     // 1. Get row element
     // 2. Find the current td
     // 3. find the next N tds
     var cell = checkbox.parentNode;
-    var row_childs = cell.parentNode.children;
+    var row_childs = cell!.parentNode!.children;
     var found = false;
     for (var c = 0; c < row_childs.length && num_columns > 0; c++) {
         if (found === false) {
@@ -138,30 +138,31 @@ function iter_cells(checkbox, func) {
             }
         }
 
-        if (row_childs[c].tagName == "TD") {
-            func(row_childs[c]);
+        let cur_row = row_childs[c];
+        if (cur_row instanceof HTMLTableRowElement) {
+            func(cur_row);
             num_columns--;
         }
     }
 }
 
-function highlight_row(elem, on) {
+function highlight_row(elem: HTMLElement, on: boolean) {
     var checkbox = find_checkbox(elem);
     if (checkbox !== null) {
-        iter_cells(checkbox, function (elem) {
+        iter_cells(checkbox, function (elem: HTMLElement) {
             highlight_elem(elem, on);
         });
     }
     return false;
 }
 
-function find_checkbox(oTd): null | HTMLInputElement {
+function find_checkbox(oTd: HTMLElement): null | HTMLInputElement {
     // Find the checkbox of this oTdent to gather the number of cells
     // to highlight after the checkbox
     // 1. Go up to the row
     // 2. search backwards for the next checkbox
     // 3. loop the number of columns to highlight
-    var allTds = oTd.parentNode.children;
+    var allTds = oTd.parentNode!.children;
     var found = false;
     var checkbox: null | HTMLInputElement = null;
     for (var a = allTds.length - 1; a >= 0 && checkbox === null; a--) {
@@ -176,8 +177,9 @@ function find_checkbox(oTd): null | HTMLInputElement {
         // current cell searching for the next checkbox
         var oTds = allTds[a].children;
         for (var x = 0; x < oTds.length; x++) {
-            if (oTds[x].tagName === "INPUT" && oTds[x].type == "checkbox") {
-                checkbox = oTds[x] as HTMLInputElement;
+            let el = oTds[x];
+            if (el instanceof HTMLInputElement && el.type == "checkbox") {
+                checkbox = el;
                 break;
             }
         }
@@ -185,17 +187,22 @@ function find_checkbox(oTd): null | HTMLInputElement {
     return checkbox;
 }
 
-function highlight_elem(elem, on) {
+function highlight_elem(elem: HTMLElement, on: boolean) {
     if (on) utils.add_class(elem, "checkbox_hover");
     else utils.remove_class(elem, "checkbox_hover");
 }
 
-function toggle_row(e, elem) {
-    if (!e) e = window.event;
+function toggle_row(e: Event | undefined, elem: HTMLElement) {
+    if (!e) e = window.event!;
 
     // Skip handling clicks on links/images/...
     var target = utils.get_target(e);
-    if (target.tagName != "TD" && target.tagName != "LABEL") return true;
+    if (
+        target instanceof HTMLElement &&
+        target.tagName != "TD" &&
+        target.tagName != "LABEL"
+    )
+        return true;
 
     // Find the checkbox for this element
     var checkbox = find_checkbox(elem);
@@ -229,7 +236,7 @@ function toggle_row(e, elem) {
     return false;
 }
 
-function set_rowselection(action, rows) {
+function set_rowselection(action: string, rows: string[]) {
     ajax.post_url(
         "ajax_set_rowselection.py",
         "id=" +
@@ -264,7 +271,11 @@ function update_row_selection_information() {
 // container are highlighted.
 // It is also possible to give an array of DOM elements as parameter to toggle
 // all checkboxes below these objects.
-export function toggle_all_rows(obj, name_select, name_deselect) {
+export function toggle_all_rows(
+    obj: HTMLElement | HTMLElement[],
+    name_select?: string,
+    name_deselect?: string
+) {
     var checkboxes = get_all_checkboxes(obj || document);
 
     var all_selected = true;
@@ -302,7 +313,7 @@ export function toggle_all_rows(obj, name_select, name_deselect) {
     }
 }
 
-function remove_selected_rows(elems) {
+function remove_selected_rows(elems: HTMLInputElement[]) {
     set_rowselection("del", selection_properties.selected_rows);
 
     for (var i = 0; i < elems.length; i++) {
@@ -314,7 +325,7 @@ function remove_selected_rows(elems) {
     update_row_selection_information();
 }
 
-function select_all_rows(elems, only_failed) {
+function select_all_rows(elems: HTMLInputElement[], only_failed?: boolean) {
     if (typeof only_failed === "undefined") {
         only_failed = false;
     }
@@ -334,13 +345,13 @@ function select_all_rows(elems, only_failed) {
 }
 
 // Toggles the datarows of the group which the given checkbox is part of.
-export function toggle_group_rows(checkbox) {
+export function toggle_group_rows(checkbox: HTMLInputElement) {
     // 1. Find the first tbody parent
     // 2. iterate over the children and search for the group header of the checkbox
     //    - Save the TR with class groupheader
     //    - End this search once found the checkbox element
-    var this_row = checkbox.parentNode.parentNode;
-    var rows = this_row.parentNode.children;
+    var this_row = checkbox.parentNode!.parentNode!;
+    var rows = this_row.parentNode!.children;
 
     var in_this_group = false;
     var group_start: number | null = null;
@@ -371,13 +382,13 @@ export function toggle_group_rows(checkbox) {
     var group_rows: HTMLTableRowElement[] = [];
     for (var a = group_start; a < group_end!; a++) {
         if (rows[a].tagName === "TR") {
-            group_rows.push(rows[a]);
+            group_rows.push(rows[a] as HTMLTableRowElement);
         }
     }
-    toggle_all_rows(group_rows, null, null);
+    toggle_all_rows(group_rows);
 }
 
-export function update_bulk_moveto(val) {
+export function update_bulk_moveto(val: string) {
     var fields = document.getElementsByClassName(
         "bulk_moveto"
     ) as HTMLCollectionOf<HTMLSelectElement>;

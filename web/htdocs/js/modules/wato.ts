@@ -274,7 +274,7 @@ export function toggle_container(id) {
 
 export function open_folder(event, link) {
     if (!event) event = window.event;
-    var target = utils.get_target(event);
+    var target = utils.get_target(event) as HTMLElement;
     if (target.tagName != "DIV") {
         // Skip this event on clicks on other elements than the pure div
         return false;

@@ -138,7 +138,7 @@ export function load_graph_content(
     // In case the graph load container (-> is at future graph location) is not
     // visible to the user delay processing of this function
     var graph_load_container = script_object.previousSibling;
-    if (!utils.is_in_viewport(graph_load_container)) {
+    if (!utils.is_in_viewport(graph_load_container as HTMLElement)) {
         g_delayed_graphs.push({
             graph_load_container: graph_load_container,
             graph_recipe: graph_recipe,
@@ -162,9 +162,9 @@ export function register_delayed_graph_listener() {
     if (num_delayed == 0) return; // no delayed graphs: Nothing to do
 
     // Start of delayed graph renderer listening
-    // @ts-ignore
     utils
-        .content_scrollbar()
+        // @ts-ignore
+        .content_scrollbar()!
         .getScrollElement()
         .addEventListener("scroll", delayed_graph_renderer);
     utils.add_event_handler("resize", delayed_graph_renderer);
@@ -261,7 +261,7 @@ function delayed_graph_renderer() {
     var i = num_delayed;
     while (i--) {
         var entry = g_delayed_graphs[i];
-        if (utils.is_in_viewport(entry.graph_load_container)) {
+        if (utils.is_in_viewport(entry.graph_load_container as HTMLElement)) {
             do_load_graph_content(
                 entry.graph_recipe,
                 entry.graph_data_range,
@@ -880,10 +880,16 @@ function get_graph_id_of_dom_node(target) {
 function graph_global_mouse_wheel(event) {
     event = event || window.event; // IE FIX
 
-    var obj = utils.get_target(event);
+    var obj: HTMLElement | ParentNode | null = utils.get_target(
+        event
+    ) as HTMLElement;
     // prevent page scrolling when making wheelies over graphs
-    while (obj && !obj.className) obj = obj.parentNode;
-    if (obj && obj.tagName == "DIV" && obj.className == "graph_container")
+    while (obj && !(obj as HTMLElement).className) obj = obj.parentNode;
+    if (
+        obj instanceof HTMLElement &&
+        obj.tagName == "DIV" &&
+        obj.className == "graph_container"
+    )
         return utils.prevent_default_events(event);
 }
 
@@ -1033,7 +1039,7 @@ function global_graph_mouse_up(event) {
                 sync_all_graph_timeranges(graph_id);
         }
     } else if (!g_resizing_graph) {
-        var target = utils.get_target(event);
+        var target = utils.get_target(event) as HTMLElement;
         if (
             target.tagName == "TH" &&
             utils.has_class(target, "scalar") &&
@@ -1286,7 +1292,7 @@ function graph_mouse_wheel(event, graph) {
 }
 
 function graph_get_click_time(event, graph) {
-    var canvas = utils.get_target(event);
+    var canvas = utils.get_target(event) as HTMLCanvasElement;
 
     // Get X position of mouse click, converted to canvas pixels
     var x = (get_event_offset_x(event) * canvas.width) / canvas.clientWidth;
@@ -1298,7 +1304,7 @@ function graph_get_click_time(event, graph) {
 }
 
 function graph_get_click_value(event, graph) {
-    var canvas = utils.get_target(event);
+    var canvas = utils.get_target(event) as HTMLCanvasElement;
 
     // Get Y position of mouse click, converted to canvas pixels
     var y = (get_event_offset_y(event) * canvas.height) / canvas.clientHeight;

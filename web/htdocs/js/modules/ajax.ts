@@ -3,6 +3,7 @@
 // conditions defined in the file COPYING, which is part of this source code package.
 
 import {merge_args} from "utils";
+import {Exception} from "sass";
 
 declare global {
     var global_csrf_token: string;
@@ -10,19 +11,19 @@ declare global {
 
 interface Args {
     method: "GET" | "POST";
-    post_data?;
-    response_handler?: (a?, b?) => void;
-    handler_data?;
-    error_handler?: (a?, b?, c?) => void;
+    post_data?: any;
+    response_handler?: (a?: any, b?: any) => void;
+    handler_data?: any;
+    error_handler?: (a?: any, b?: any, c?: any, d?: any) => void;
     add_ajax_id?: boolean;
 }
 
 // NOTE: This function is deprecated; use call_ajax instead.
 export function get_url(
     url: string,
-    handler?: (a?, b?) => void,
-    data: any = undefined,
-    errorHandler?: (a?, b?, c?) => void,
+    handler?: (a?: any, b?: any) => void,
+    data?: any,
+    errorHandler?: (a?: any, b?: any, c?: any, d?: any) => void,
     addAjaxId?: boolean
 ) {
     var args: Args = {
@@ -43,9 +44,9 @@ export function get_url(
 export function post_url(
     url: string,
     post_params: string,
-    responseHandler?: (a?, b?) => void,
+    responseHandler?: (a?: any, b?: string) => void,
     handler_data: any = undefined,
-    errorHandler?: (a?, b?, c?) => void
+    errorHandler?: (a?: any, b?: any, c?: any, d?: any) => void
 ) {
     var args: Args = {
         method: "POST",
@@ -63,7 +64,7 @@ export function post_url(
     call_ajax(url, args);
 }
 
-export function call_ajax(url, optional_args) {
+export function call_ajax(url: string, optional_args: any) {
     var args = merge_args(
         {
             add_ajax_id: true,
