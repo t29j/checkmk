@@ -1217,6 +1217,45 @@ def check_single_interface(
             notice=f"Could not compute rates for the following counter(s): {', '.join(overflows_human_readable)}",
         )
 
+    ### DEBUGGING v0.1 ###
+    from cmk.base.plugin_contexts import host_name
+    from datetime import datetime
+    from json import dumps
+    from pathlib import Path
+    from pprint import pformat
+
+    # get the host_name of this context
+    host_name = host_name()
+
+    # set up log_dir and log_file
+    now = datetime.now()
+    year = now.strftime("%Y")
+    month = now.strftime("%m")
+    day = now.strftime("%d")
+    base_dir = Path("~/interface_logs/").expanduser()
+    log_dir = base_dir / year / month / day / host_name
+    log_dir.mkdir(parents=True,exist_ok=True)
+    log_file = log_dir / item.replace("/", "_").replace(" ", "_").replace(":", "_")
+    log_file = log_file.with_suffix(".log")
+
+    # construct dict as log line, will be saved as json
+    log_line = {
+        "timestamp": timestamp,
+        "host_name": host_name,
+        "item": item,
+        "in_octets": interface.in_octets,
+        "out_octets": interface.out_octets,
+        "value_store": {k: v for k, v in value_store.items() if "traffic" in k},
+        "rates_dict": {k: v for k, v in rates_dict.items() if "traffic" in k},
+    }
+
+    print( log_file)
+    print( dumps(log_line, indent=4))
+
+    # write log line to log file
+    with open(log_file, "a") as fd:
+        fd.write( dumps( log_line ) + "\n" )
+
 
 def _interface_name(
     *,
