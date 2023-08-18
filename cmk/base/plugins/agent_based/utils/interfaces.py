@@ -1217,7 +1217,7 @@ def check_single_interface(
             notice=f"Could not compute rates for the following counter(s): {', '.join(overflows_human_readable)}",
         )
 
-    ### DEBUGGING v0.1 ###
+    ### DEBUGGING v0.2 ###
     from cmk.base.plugin_contexts import host_name
     from datetime import datetime
     from json import dumps
@@ -1249,8 +1249,8 @@ def check_single_interface(
         "rates_dict": {k: v for k, v in rates_dict.items() if "traffic" in k},
     }
 
-    print( log_file)
-    print( dumps(log_line, indent=4))
+    #print( log_file)
+    #print( dumps(log_line, indent=4))
 
     # write log line to log file
     with open(log_file, "a") as fd:
